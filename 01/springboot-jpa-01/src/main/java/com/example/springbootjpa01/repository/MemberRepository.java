@@ -1,6 +1,7 @@
-package com.example.springbootjpa01.domain.repository;
+package com.example.springbootjpa01.repository;
 
 import com.example.springbootjpa01.domain.Member;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -8,9 +9,14 @@ import javax.persistence.PersistenceContext;
 import java.util.List;
 
 @Repository // Spring Bean으로 등록
+@RequiredArgsConstructor
 public class MemberRepository {
 
+    /* Lombok 미적용
     @PersistenceContext // Spring의 EntityManager를 주입
+    private EntityManager em;
+     */
+
     private EntityManager em;
 
     public void save(Member member) {
