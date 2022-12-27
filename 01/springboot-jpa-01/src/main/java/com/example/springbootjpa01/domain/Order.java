@@ -1,6 +1,8 @@
 package com.example.springbootjpa01.domain;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -12,6 +14,7 @@ import java.util.List;
 @Table(name = "orders")
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 protected로 제약
 public class Order {
 
     @Id @GeneratedValue

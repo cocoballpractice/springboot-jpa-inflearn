@@ -1,7 +1,9 @@
 package com.example.springbootjpa01.domain;
 
 import com.example.springbootjpa01.domain.item.Item;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -9,6 +11,7 @@ import javax.persistence.*;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 protected로 제약
 public class OrderItem {
 
     @Id @GeneratedValue
@@ -28,6 +31,8 @@ public class OrderItem {
 
 
     // 생성 메서드
+
+    // protected OrderItem() {} static 외 생성 제약
 
     public static OrderItem createOrderItem (Item item, int orderPrice, int count) {
         OrderItem orderItem = new OrderItem();
