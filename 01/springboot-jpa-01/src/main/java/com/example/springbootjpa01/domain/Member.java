@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class Member {
     @Column(name = "member_id")
     private Long id;
 
+    @NotEmpty // 화면에서 처리해야 할 검증이 엔티티에 들어가 있음
     private String name;
 
     @Embedded
