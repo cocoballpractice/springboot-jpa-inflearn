@@ -2,11 +2,10 @@ package com.example.springbootjpa01.api;
 
 import com.example.springbootjpa01.domain.Member;
 import com.example.springbootjpa01.service.MemberService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -20,7 +19,7 @@ public class MemberApiController {
     /**
      * 아래의 케이스는 WORST 케이스
      * 파라미터를 엔티티로 받아버릴 경우 화면에서 검증을 해야 하는 것을 엔티티가 직접 수행하게 됨
-     * 또한 특정 서비스에 맞게 엔티티를 수정할 경우 다른 서비스의 API 스펙도 같이 바뀌게 되어버림 (필드명, 필드에 필요한 값 등...)
+     * 또한 특정 서비스에 맞게 엔티티를 수정할 경우 다른 서비스의 API 스펙도 같이 바뀌게 되어버림 (side effect)
      * 따라서 파라미터를 엔티티가 아닌 Dto로 받아야 한다
      */
     @PostMapping("/api/v1/members")
@@ -44,6 +43,15 @@ public class MemberApiController {
         return new CreateMemberResponse(id);
     }
 
+    @PutMapping("/api/v2/members/{id}")
+    public UpdateMemberResponse updateMemberV2(@PathVariable("id") Long id,
+                                               @RequestBody @Valid UpdateMemberRequest request) {
+
+        memberService.update(id, request.getName());
+        Member findMember = memberService.findOne(id);
+        return new UpdateMemberResponse(findMember.getId(), findMember.getName());
+    }
+
 
     /**
      * 별도의 클래스로 만들지는 않고 내부 클래스로 간편하게 설정
@@ -60,6 +68,21 @@ public class MemberApiController {
 
     @Data
     static class CreateMemberRequest {
+        @NotEmpty
+        private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class UpdateMemberResponse {
+
+        private Long id;
+        private String name;
+
+    }
+
+    @Data
+    static class UpdateMemberRequest {
         @NotEmpty
         private String name;
     }
