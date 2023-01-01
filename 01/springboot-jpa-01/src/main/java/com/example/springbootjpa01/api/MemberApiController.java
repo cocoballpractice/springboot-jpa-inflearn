@@ -9,12 +9,39 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController // @Controller + @ResponseBody
 @RequiredArgsConstructor
 public class MemberApiController {
 
     private final MemberService memberService;
+
+    /**
+     * 아래의 케이스는 WORST 케이스
+     * 엔티티를 직접 반환할 경우 엔티티 내의 모든 정보가 전부 노출이 되기 때문에 선택적으로 노출을 할 수가 없음
+     * @JsonIgnore 등 화면에서 처리해야 하는 것을 엔티티가 직접 수행하게 됨
+     * 특정 서비스에 맞게 엔티티 수정 시 다른 서비스의 API 스펙도 같이 바뀜 (side effect)
+     * 그 외에, 리스트를 직접 반환하게 될 경우 API 스펙을 변형하기가 어려움
+     */
+    @GetMapping("/api/v1/members")
+    public List<Member> membersV1() {
+        return memberService.findMembers();
+    }
+
+    /**
+     * 엔티티가 아닌 Dto를 반환 (stream 활용)
+     * 결과 리스트를 Result로 한 번 더 감싸서 반환
+     */
+    @GetMapping("/api/v2/members")
+    public Result memberV2() {
+        List<Member> findMembers = memberService.findMembers();
+        List<MemberDto> collect = findMembers.stream().map(m -> new MemberDto(m.getName()))
+                .collect(Collectors.toList());
+
+        return new Result(collect); // List를 감싸줌
+    }
 
     /**
      * 아래의 케이스는 WORST 케이스
@@ -48,7 +75,7 @@ public class MemberApiController {
                                                @RequestBody @Valid UpdateMemberRequest request) {
 
         memberService.update(id, request.getName());
-        Member findMember = memberService.findOne(id);
+        Member findMember = memberService.findOne(id); // 비즈니스 로직으로 엔티티를 한 번 더 조회
         return new UpdateMemberResponse(findMember.getId(), findMember.getName());
     }
 
@@ -84,6 +111,18 @@ public class MemberApiController {
     @Data
     static class UpdateMemberRequest {
         @NotEmpty
+        private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class Result<T> {
+        private T data;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class MemberDto {
         private String name;
     }
 
