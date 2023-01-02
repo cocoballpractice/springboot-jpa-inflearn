@@ -1,6 +1,7 @@
 package com.example.springbootjpa01.domain;
 
 import com.example.springbootjpa01.domain.item.Item;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class OrderItem {
     @JoinColumn(name = "item_id")
     private Item item;
 
+    @JsonIgnore // 양방향 연관관계일 경우 한쪽은 Ignore 처리 (순환참조 방지)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
