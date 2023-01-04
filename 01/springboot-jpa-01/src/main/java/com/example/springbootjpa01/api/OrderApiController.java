@@ -9,6 +9,7 @@ import com.example.springbootjpa01.repository.OrderSearch;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -60,6 +61,23 @@ public class OrderApiController {
             System.out.println("order ref=" + order + " id=" + order.getId()); // 레퍼런스, id가 동일한 order가 중복으로 나감
         }
          */
+
+        List<OrderDto> collect = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+
+        return collect;
+    }
+
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page(
+            @RequestParam(value = "offset", defaultValue = "0") int offset,
+            @RequestParam(value = "limit", defaultValue = "100") int limit) {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit);
+        // ~toOne 관계를 페치 조인하여 가져오는 메소드, member / delivery는 한번에 조회 (1회차 때 이미 조회하여 2회차부터는 조회 X)
+        // 페이징 처리가 가능 (
+        // 일대다 관계로 설정된 orderItems 수만큼, 그리고 orderItems 내의 item 수만큼 쿼리가 발생
+        // hibernate.default_batch_fetch_size 옵션으로 최적화 진행, size만큼 in 쿼리를 날려서 한 번에 하위 엔티티들을 가져옴
 
         List<OrderDto> collect = orders.stream()
                 .map(o -> new OrderDto(o))
