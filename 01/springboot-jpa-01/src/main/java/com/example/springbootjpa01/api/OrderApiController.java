@@ -51,6 +51,24 @@ public class OrderApiController {
         return collect;
     }
 
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+
+        /*
+        for (Order order : orders) {
+            System.out.println("order ref=" + order + " id=" + order.getId()); // 레퍼런스, id가 동일한 order가 중복으로 나감
+        }
+         */
+
+        List<OrderDto> collect = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+
+        return collect;
+    }
+
+
     @Getter
     static class OrderDto {
 
