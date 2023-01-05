@@ -97,6 +97,14 @@ public class OrderApiController {
         // ToMany 관계는 조인 시 row 수가 증가함 -> 최적화가 어려우므로 별도의 메소드로 조회
     }
 
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDto> ordersV5() {
+        return orderQueryRepository.findAllByDto_optimization();
+        // 쿼리는 루트 1번, 컬렉션은 N번 실행 (ToOne 관계를 한 번, OneTo~ 관계를 N번)
+        // ToOne 관계는 row 수를 증가시키지 않음 -> 한 번에 조회
+        // ToMany 관계는 조인 시 row 수가 증가함 -> 최적화가 어려우므로 별도의 메소드로 조회
+    }
+
 
     @Getter
     static class OrderDto {

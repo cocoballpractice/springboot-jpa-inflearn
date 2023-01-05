@@ -5,6 +5,8 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -20,6 +22,23 @@ public class OrderQueryRepository {
             List<OrderItemQueryDto> orderItems = findOrderItems(o.getOrderId());
             o.setOrderItems(orderItems);
         });
+        return result;
+    }
+
+    public List<OrderQueryDto> findAllByDto_optimization() {
+
+        // 주문 한번에 조회
+        List<OrderQueryDto> result = findOrders();
+
+        // 주문번호 컬렉션 조회
+        List<Long> orderIds = toOrderIds(result);
+
+        // key:주문번호 value:OrderItemDto 컬렉션 인 Map 생성
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = findOrderItemMap(orderIds);
+
+        // 주문 - Map 매칭
+        result.forEach(o -> o.setOrderItems(orderItemMap.get(o.getOrderId())));
+
         return result;
     }
 
@@ -47,5 +66,37 @@ public class OrderQueryRepository {
                 .setParameter("orderId", orderId)
                 .getResultList();
     }
+
+    /**
+     *
+     */
+    private List<Long> toOrderIds(List<OrderQueryDto> result) {
+        List<Long> orderIds = result.stream()
+                .map(o -> o.getOrderId())
+                .collect(Collectors.toList()); // orderId를 전부 컬렉션에 담음
+        // -> 아래 쿼리에 있는 IN 절에 뿌림 (batch.size 적용 효과)
+        return orderIds;
+    }
+
+    /**
+     *
+     */
+    private Map<Long, List<OrderItemQueryDto>> findOrderItemMap(List<Long> orderIds) {
+
+        // OrderItemDto 처리용 쿼리 (IN 절 적용하여 한 번에 조회)
+        List<OrderItemQueryDto> orderItems = em.createQuery(
+                        "select new com.example.springbootjpa01.repository.order.query.OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count)" +
+                                " from OrderItem oi" +
+                                " join oi.item i" +
+                                " where oi.order.id in :orderIds", OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
+                .getResultList();
+
+        // orderId가 Key이고 OrderItemQueryDto 컬렉션이 value인 맵으로 묶음 (메모리 상으로 올려둠)
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = orderItems.stream()
+                .collect(Collectors.groupingBy(orderItemQueryDto -> orderItemQueryDto.getOrderId()));
+        return orderItemMap;
+    }
+
 
 }
