@@ -42,6 +42,18 @@ public class OrderQueryRepository {
         return result;
     }
 
+    public List<OrderFlatDto> findAllByDto_flat() {
+        // 쿼리는 한 번 나가지만 OrderItems 기준으로 페이징이 됨 (Order 기준으로는 불가) + 중복 Order가 DB상에 조회됨
+        return em.createQuery(
+                "select new com.example.springbootjpa01.repository.order.query.OrderFlatDto(o.id, m.name, o.orderDate, o.status, d.address, i.name, oi.orderPrice, oi.count) " +
+                        " from Order o" +
+                        " join o.member m" +
+                        " join o.delivery d" +
+                        " join o.orderItems oi" +
+                        " join oi.item i", OrderFlatDto.class)
+                .getResultList();
+    }
+
     /**
      * OrderDto 처리용 메소드
      */
@@ -68,7 +80,7 @@ public class OrderQueryRepository {
     }
 
     /**
-     *
+     * OrderItemDto 조회 시 IN 쿼리 파라미터로 사용할 OrderId 컬렉션 처리
      */
     private List<Long> toOrderIds(List<OrderQueryDto> result) {
         List<Long> orderIds = result.stream()
@@ -79,7 +91,8 @@ public class OrderQueryRepository {
     }
 
     /**
-     *
+     * OrderItemDto 처리용 메소드 (IN 쿼리 적용)
+     * 이후 key : orderId value : List<OrderIdDto> 인 Map 생성
      */
     private Map<Long, List<OrderItemQueryDto>> findOrderItemMap(List<Long> orderIds) {
 

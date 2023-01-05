@@ -6,6 +6,8 @@ import com.example.springbootjpa01.domain.OrderItem;
 import com.example.springbootjpa01.domain.OrderStatus;
 import com.example.springbootjpa01.repository.OrderRepository;
 import com.example.springbootjpa01.repository.OrderSearch;
+import com.example.springbootjpa01.repository.order.query.OrderFlatDto;
+import com.example.springbootjpa01.repository.order.query.OrderItemQueryDto;
 import com.example.springbootjpa01.repository.order.query.OrderQueryDto;
 import com.example.springbootjpa01.repository.order.query.OrderQueryRepository;
 import lombok.Getter;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * OneToMany 관계
@@ -100,9 +104,21 @@ public class OrderApiController {
     @GetMapping("/api/v5/orders")
     public List<OrderQueryDto> ordersV5() {
         return orderQueryRepository.findAllByDto_optimization();
-        // 쿼리는 루트 1번, 컬렉션은 N번 실행 (ToOne 관계를 한 번, OneTo~ 관계를 N번)
-        // ToOne 관계는 row 수를 증가시키지 않음 -> 한 번에 조회
-        // ToMany 관계는 조인 시 row 수가 증가함 -> 최적화가 어려우므로 별도의 메소드로 조회
+    }
+
+    @GetMapping("/api/v6/orders")
+    public List<OrderQueryDto> ordersV6() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllByDto_flat();
+
+        // OrderFlatDto -> OrderQueryDto로 변환 + 중복 Order 제거
+        // Order 기준으로는 페이징 불가
+        // DB에서 중복 데이터를 거르지 않고 애플리케이션에 전달하기 때문에 처리 속도가 느려질 수 있음
+        return flats.stream()
+                .collect(groupingBy(o -> new OrderQueryDto(o.getOrderId(), o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        mapping(o -> new OrderItemQueryDto(o.getOrderId(), o.getItemName(), o.getOrderPrice(), o.getCount()), toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDto(e.getKey().getOrderId(), e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(), e.getKey().getAddress(), e.getValue()))
+                .collect(toList());
     }
 
 
